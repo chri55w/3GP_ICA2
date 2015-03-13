@@ -5,66 +5,42 @@
 
 class MyView;
 
-class MyController : public tygra::WindowControlDelegate
-{
-public:
-	
-    MyController();
+class MyController : public tygra::WindowControlDelegate {
+	public:
 
-    ~MyController();
+		MyController();
 
-private:
+		~MyController();
 
-    void
-    windowControlWillStart(std::shared_ptr<tygra::Window> window) override;
+	private:
 
-    void
-    windowControlDidStop(std::shared_ptr<tygra::Window> window) override;
+		void windowControlWillStart(std::shared_ptr<tygra::Window> window) override;
 
-    void
-    windowControlViewWillRender(std::shared_ptr<tygra::Window> window) override;
+		void windowControlDidStop(std::shared_ptr<tygra::Window> window) override;
 
-    void
-    windowControlMouseMoved(std::shared_ptr<tygra::Window> window,
-                            int x,
-                            int y) override;
+		void windowControlViewWillRender(std::shared_ptr<tygra::Window> window) override;
 
-    void
-    windowControlMouseButtonChanged(std::shared_ptr<tygra::Window> window,
-                                    int button_index,
-                                    bool down) override;
+		void windowControlMouseMoved(std::shared_ptr<tygra::Window> window, int x, int y) override;
 
-    void
-    windowControlMouseWheelMoved(std::shared_ptr<tygra::Window> window,
-                                 int position) override;
+		void windowControlMouseButtonChanged(std::shared_ptr<tygra::Window> window,	int button_index, bool down) override;
 
-    void
-    windowControlKeyboardChanged(std::shared_ptr<tygra::Window> window,
-                                 int key_index,
-                                 bool down) override;
+		void windowControlMouseWheelMoved(std::shared_ptr<tygra::Window> window, int position) override;
 
-    void
-    windowControlGamepadAxisMoved(std::shared_ptr<tygra::Window> window,
-                                  int gamepad_index,
-                                  int axis_index,
-                                  float pos) override;
+		void windowControlKeyboardChanged(std::shared_ptr<tygra::Window> window, int key_index, bool down) override;
 
-    void
-    windowControlGamepadButtonChanged(std::shared_ptr<tygra::Window> window,
-                                      int gamepad_index,
-                                      int button_index,
-                                      bool down) override;
+		void windowControlGamepadAxisMoved(std::shared_ptr<tygra::Window> window, int gamepad_index, int axis_index, float pos) override;
 
-private:
-    void
-    updateCameraTranslation();
+		void windowControlGamepadButtonChanged(std::shared_ptr<tygra::Window> window, int gamepad_index, int button_index, bool down) override;
 
-    std::shared_ptr<MyView> view_;
-    std::shared_ptr<SceneModel::Context> scene_;
+	private:
+		void updateCameraTranslation();
 
-	float camera_speed_{ 30 };
-    bool camera_turn_mode_{ false };
-    float camera_move_speed_[4];
-    float camera_rotate_speed_[2];
+		std::shared_ptr<MyView> view_;
+		std::shared_ptr<SceneModel::Context> scene_;
+
+		float camera_speed_{ 30 };
+		bool camera_turn_mode_{ false };
+		float camera_move_speed_[4];
+		float camera_rotate_speed_[2];
 
 };
