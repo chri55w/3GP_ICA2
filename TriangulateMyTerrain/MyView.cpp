@@ -164,14 +164,24 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	{
 		for (int x = 0; x < gridXInQuads; x++)
 		{
+			if (((x % 2) == 0 && (z % 2) == 0) || ((x % 2) != 0 && (z % 2) != 0)) {
+				elements.push_back(quadOrigin);
+				elements.push_back(quadOrigin + 1);
+				elements.push_back(quadOrigin + xIndices);
 
-			elements.push_back(quadOrigin);
-			elements.push_back(quadOrigin + 1);
-			elements.push_back(quadOrigin + xIndices);
-			elements.push_back(quadOrigin + 1);
-			elements.push_back(quadOrigin + xIndices + 1);
-			elements.push_back(quadOrigin + xIndices);
+				elements.push_back(quadOrigin + 1);
+				elements.push_back(quadOrigin + xIndices + 1);
+				elements.push_back(quadOrigin + xIndices);
+			} else {
+				elements.push_back(quadOrigin);
+				elements.push_back(quadOrigin + 1);
+				elements.push_back(quadOrigin + xIndices + 1);
 
+				elements.push_back(quadOrigin);
+				elements.push_back(quadOrigin + xIndices + 1);
+				elements.push_back(quadOrigin + xIndices);
+				
+			}
 			quadOrigin++;
 		}
 		quadOrigin++;
