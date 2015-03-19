@@ -143,6 +143,40 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
 
+
+	std::vector<glm::vec3> positions;
+	std::vector<GLuint> elements;
+	int gridZInQuads = sizeZ/10;
+	int gridXInQuads = sizeX/10;
+	int zIndices = gridZInQuads + 1;
+	int xIndices = gridXInQuads + 1;
+
+	for (int z = 0; z < zIndices; z++) {
+		for (int x = 0; x < xIndices; x++) {
+			glm::vec3 new_pos = glm::vec3(10 * x, 10, -10 * z);
+			positions.push_back(new_pos);
+		}
+	}
+
+	//int totalnumofquads = quad_num*quad_num;
+	int quadOrigin = 0;
+	for (int z = 0; z < gridZInQuads; z++)
+	{
+		for (int x = 0; x < gridXInQuads; x++)
+		{
+
+			elements.push_back(quadOrigin);
+			elements.push_back(quadOrigin + 1);
+			elements.push_back(quadOrigin + xIndices);
+			elements.push_back(quadOrigin + 1);
+			elements.push_back(quadOrigin + xIndices + 1);
+			elements.push_back(quadOrigin + xIndices);
+
+			quadOrigin++;
+		}
+		quadOrigin++;
+	}
+
 	// below is an example of reading the red component of pixel(x,y) as a byte [0,255]
 	//uint8_t height = *(uint8_t*)height_image(x, y);
 
@@ -153,29 +187,29 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	//const auto& elements = mesh.GetElementArray();
 	//const auto& positions = mesh.GetPositionArray();
 
-	//glGenBuffers(1, &terrain_mesh_.element_vbo);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain_mesh_.element_vbo);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-	//    elements.size() * sizeof(unsigned int),
-	//    elements.data(), GL_STATIC_DRAW);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	//terrain_mesh_.element_count = elements.size();
+	glGenBuffers(1, &terrain_mesh_.element_vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain_mesh_.element_vbo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+	    elements.size() * sizeof(unsigned int),
+	    elements.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	terrain_mesh_.element_count = elements.size();
+	
+	glGenBuffers(1, &terrain_mesh_.position_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, terrain_mesh_.position_vbo);
+	glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3),
+	             positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//glGenBuffers(1, &terrain_mesh_.position_vbo);
-	//glBindBuffer(GL_ARRAY_BUFFER, terrain_mesh_.position_vbo);
-	//glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3),
-	//             positions.data(), GL_STATIC_DRAW);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//glGenVertexArrays(1, &terrain_mesh_.vao);
-	//glBindVertexArray(terrain_mesh_.vao);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain_mesh_.element_vbo);
-	//glBindBuffer(GL_ARRAY_BUFFER, terrain_mesh_.position_vbo);
-	//glEnableVertexAttribArray(kVertexPosition);
-	//glVertexAttribPointer(kVertexPosition, 3, GL_FLOAT, GL_FALSE,
-	//                      sizeof(glm::vec3), TGL_BUFFER_OFFSET(0));
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
+	glGenVertexArrays(1, &terrain_mesh_.vao);
+	glBindVertexArray(terrain_mesh_.vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain_mesh_.element_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, terrain_mesh_.position_vbo);
+	glEnableVertexAttribArray(kVertexPosition);
+	glVertexAttribPointer(kVertexPosition, 3, GL_FLOAT, GL_FALSE,
+	                      sizeof(glm::vec3), TGL_BUFFER_OFFSET(0));
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void MyView::windowViewDidReset(std::shared_ptr<tygra::Window> window, int width, int height) {
