@@ -143,7 +143,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
 
-
 	std::vector<glm::vec3> positions;
 	std::vector<GLuint> elements;
 	int gridZInQuads = sizeZ/10;
@@ -152,19 +151,25 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	int xIndices = gridXInQuads + 1;
 
 	for (int z = 0; z < zIndices; z++) {
-		for (int x = 0; x < xIndices; x++) {
-			glm::vec3 new_pos = glm::vec3(10 * x, 10, -10 * z);
+		for (int x = 0; x < xIndices; x++) { 
+
+			int modifiedX = (255.0f / gridXInQuads) * x + 1;
+			int modifiedZ = (255.0f / gridZInQuads) * z + 1;
+
+			float vertHeight = static_cast<float>(*(uint8_t*)height_image(-modifiedZ, modifiedX));
+			glm::vec3 new_pos = glm::vec3(10 * x, vertHeight, -10 * z);
 			positions.push_back(new_pos);
 		}
 	}
 
 	//int totalnumofquads = quad_num*quad_num;
 	int quadOrigin = 0;
-	for (int z = 0; z < gridZInQuads; z++)
-	{
-		for (int x = 0; x < gridXInQuads; x++)
-		{
+	for (int z = 0; z < gridZInQuads; z++) {
+
+		for (int x = 0; x < gridXInQuads; x++) {
+
 			if (((x % 2) == 0 && (z % 2) == 0) || ((x % 2) != 0 && (z % 2) != 0)) {
+
 				elements.push_back(quadOrigin);
 				elements.push_back(quadOrigin + 1);
 				elements.push_back(quadOrigin + xIndices);
@@ -172,7 +177,9 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 				elements.push_back(quadOrigin + 1);
 				elements.push_back(quadOrigin + xIndices + 1);
 				elements.push_back(quadOrigin + xIndices);
+
 			} else {
+
 				elements.push_back(quadOrigin);
 				elements.push_back(quadOrigin + 1);
 				elements.push_back(quadOrigin + xIndices + 1);
@@ -188,7 +195,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	}
 
 	// below is an example of reading the red component of pixel(x,y) as a byte [0,255]
-	//uint8_t height = *(uint8_t*)height_image(x, y);
 
 	// below is indicative code for initialising a terrain VAO
 

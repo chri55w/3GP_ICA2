@@ -93,12 +93,11 @@ void MyController::windowControlKeyboardChanged(std::shared_ptr<tygra::Window> w
 			view_->toggleShading();
 			break;
 		case tygra::kWindowKeyF3:
-			camera_speed_ = camera_speed_ - 20.f;
+			camera_speed_ = camera_speed_ - 60.f;
 			if (camera_speed_ < 20.f) camera_speed_ = 20.f;
 			break;
 		case tygra::kWindowKeyF4:
-			camera_speed_ = camera_speed_ + 20.f;
-			if (camera_speed_ > 500.f) camera_speed_ = 500.f;
+			camera_speed_ = camera_speed_ + 60.f;
 			break;
 	}
 }
