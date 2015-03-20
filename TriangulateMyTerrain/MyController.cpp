@@ -98,6 +98,7 @@ void MyController::windowControlKeyboardChanged(std::shared_ptr<tygra::Window> w
 			break;
 		case tygra::kWindowKeyF4:
 			camera_speed_ = camera_speed_ + 60.f;
+            std::cout << "Camera_Speed Increased to: " << camera_speed_ << std::endl;
 			break;
 	}
 }

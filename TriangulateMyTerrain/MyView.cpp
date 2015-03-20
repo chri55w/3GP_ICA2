@@ -136,6 +136,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+    
 
 	const float sizeX = scene_->getTerrainSizeX();
 	const float sizeY = scene_->getTerrainSizeY();
@@ -145,30 +146,53 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 	std::vector<glm::vec3> positions;
 	std::vector<GLuint> elements;
-	int gridZInQuads = sizeZ/10;
-	int gridXInQuads = sizeX/10;
-	int zIndices = gridZInQuads + 1;
-	int xIndices = gridXInQuads + 1;
+
+	const int subDivisionsZ = 819;
+	const int subDivisionsX = 819;
+	
+	const int spacingZ = sizeZ / subDivisionsZ;
+	const int spacingX = sizeX / subDivisionsX;
+
+    // Indices uses number of subdivisions plus one for the final line of points for the quads due to each quad sharing
+	//                                                                 one point along each axis except the final point
+	const int zIndices = subDivisionsZ + 1;
+	const int xIndices = subDivisionsX + 1;
+
+    //                    Height Image Width and Height are LESS one to put values in range of 0-height-1 and 0-width-1
+	const float heightImageWidth = 255;
+	const float heightImageHeight = 255;
+
+    std::vector<double> noiseValues;
 
 	for (int z = 0; z < zIndices; z++) {
+
 		for (int x = 0; x < xIndices; x++) { 
 
-			int modifiedX = (255.0f / gridXInQuads) * x + 1;
-			int modifiedZ = (255.0f / gridZInQuads) * z + 1;
+            //      Modified X and Modified Z are PLUS one to return values to 1-height and 1-width after the division.
+            
+			int modifiedX = (heightImageWidth / subDivisionsX) * x + 1;
+			int modifiedZ = (heightImageHeight / subDivisionsZ) * z + 1;
 
-			float vertHeight = static_cast<float>(*(uint8_t*)height_image(-modifiedZ, modifiedX));
-			glm::vec3 new_pos = glm::vec3(10 * x, vertHeight, -10 * z);
+            double noiseValue = noise(x, 1, z);
+            noiseValues.push_back(noiseValue);
+
+            //   Position height fetches a height from the height image using the modified X coordinate and the flipped
+            //                                                    modified Z which accounts for direction of the cubes.
+            //                                         The Z value is also flipped in the creation of the new position.
+            float posHeight = static_cast<float>(*(uint8_t*)height_image(-modifiedZ, modifiedX));
+
+			glm::vec3 new_pos = glm::vec3(spacingX * x, posHeight, -spacingZ * z);
+
 			positions.push_back(new_pos);
 		}
 	}
 
-	//int totalnumofquads = quad_num*quad_num;
 	int quadOrigin = 0;
-	for (int z = 0; z < gridZInQuads; z++) {
+	for (int z = 0; z < subDivisionsZ; z++) {
 
-		for (int x = 0; x < gridXInQuads; x++) {
+        for (int x = 0; x < subDivisionsX; x++) {
 
-			if (((x % 2) == 0 && (z % 2) == 0) || ((x % 2) != 0 && (z % 2) != 0)) {
+            if (((x % 2) == 0 && (z % 2) == 0) || ((x % 2) != 0 && (z % 2) != 0)) {
 
 				elements.push_back(quadOrigin);
 				elements.push_back(quadOrigin + 1);
@@ -193,15 +217,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		}
 		quadOrigin++;
 	}
-
-	// below is an example of reading the red component of pixel(x,y) as a byte [0,255]
-
-	// below is indicative code for initialising a terrain VAO
-
-	//const int vertex_count = mesh.GetVertexCount();
-	//const int element_count = mesh.GetElementCount();
-	//const auto& elements = mesh.GetElementArray();
-	//const auto& positions = mesh.GetPositionArray();
 
 	glGenBuffers(1, &terrain_mesh_.element_vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain_mesh_.element_vbo);
@@ -306,3 +321,49 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 }
+double MyView::grad(int hash, double x, double y, double z) {
+    int h = hash & 15;                      // CONVERT LO 4 BITS OF HASH CODE
+    double u = h<8 ? x : y,                 // INTO 12 GRADIENT DIRECTIONS.
+        v = h<4 ? y : h == 12 || h == 14 ? x : z;
+    return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+}
+double MyView::noise(double x, double y, double z) {
+    int X = (int)ceil(x) & 255,                  // FIND UNIT CUBE THAT
+        Y = (int)ceil(y) & 255,                  // CONTAINS POINT.
+        Z = (int)ceil(z) & 255;
+    x -= ceil(x);                                // FIND RELATIVE X,Y,Z
+    y -= ceil(y);                                // OF POINT IN CUBE.
+    z -= ceil(z);
+    double u = fade(x),                                // COMPUTE FADE CURVES
+        v = fade(y),                                // FOR EACH OF X,Y,Z.
+        w = fade(z);
+    int A = permutation[X] + Y, AA = permutation[A] + Z, AB = permutation[A + 1] + Z,      // HASH COORDINATES OF
+        B = permutation[X + 1] + Y, BA = permutation[B] + Z, BB = permutation[B + 1] + Z;      // THE 8 CUBE CORNERS,
+
+    return lerp(w, lerp(v, lerp(u, grad(permutation[AA], x, y, z),  // AND ADD
+        grad(permutation[BA], x - 1, y, z)), // BLENDED
+        lerp(u, grad(permutation[AB], x, y - 1, z),  // RESULTS
+        grad(permutation[BB], x - 1, y - 1, z))),// FROM  8
+        lerp(v, lerp(u, grad(permutation[AA + 1], x, y, z - 1),  // CORNERS
+        grad(permutation[BA + 1], x - 1, y, z - 1)), // OF CUBE
+        lerp(u, grad(permutation[AB + 1], x, y - 1, z - 1),
+        grad(permutation[BB + 1], x - 1, y - 1, z - 1))));
+}
+int MyView::permutation[512] = { 151, 160, 137, 91, 90, 15,
+131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,
+190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
+88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166,
+77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244,
+102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196,
+135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123,
+5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42,
+223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
+129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228,
+251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
+49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
+138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+};
+/*
+static {
+    for (int i = 0; i < 256; i++) p[256 + i] = p[i] = permutation[i]; 
+    }*/ 

@@ -1,12 +1,12 @@
-﻿Build started 20/03/2015 01:24:40.
+﻿Build started 20/03/2015 17:55:55.
      1>Project "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\TriangulateMyTerrain.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I../external/include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MyController.cpp main.cpp
-         MyController.cpp
-         Generating Code...
-         Compiling...
-         main.cpp
-         Generating Code...
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I../external/include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MyView.cpp
+         MyView.cpp
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(153): warning C4244: 'initializing' : conversion from 'const float' to 'const int', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(154): warning C4244: 'initializing' : conversion from 'const float' to 'const int', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(173): warning C4244: 'initializing' : conversion from 'const float' to 'int', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(174): warning C4244: 'initializing' : conversion from 'const float' to 'int', possible loss of data
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Debug\TriangulateMyTerrain.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\external\lib\Win32\v120\Debug opengl32.lib glfw.lib libpng.lib zlib.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"Debug\TriangulateMyTerrain.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"Debug\TriangulateMyTerrain.lib" /MACHINE:X86 Debug\Camera.obj
          Debug\Context.obj
@@ -26,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.55
+Time Elapsed 00:00:01.14

@@ -51,4 +51,19 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
+        static double noise(double x, double y, double z);
+        static double grad(int hash, double x, double y, double z);
+
+        static int permutation[512];
+
+
+        static double fade(double t) {
+            return t * t * t * (t * (t * 6 - 15) + 10);
+        }
+
+        static double lerp(double t, double a, double b) {
+            return a + t * (b - a);
+        }
+
+
 };
