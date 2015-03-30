@@ -48,6 +48,9 @@
     <ClCompile Include="..\external\src\SceneModel\Context.cpp">
       <Filter>External\SceneModel</Filter>
     </ClCompile>
+    <ClCompile Include="PerlinNoise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MyController.hpp">
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="..\external\include\SceneModel\Context.hpp">
       <Filter>External\SceneModel</Filter>
+    </ClInclude>
+    <ClInclude Include="PerlinNoise.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

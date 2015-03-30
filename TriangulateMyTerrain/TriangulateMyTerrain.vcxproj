@@ -111,6 +111,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyController.cpp" />
     <ClCompile Include="MyView.cpp" />
+    <ClCompile Include="PerlinNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\include\SceneModel\Camera.hpp" />
@@ -118,6 +119,7 @@
     <ClInclude Include="..\external\src\SceneModel\FirstPersonMovement.hpp" />
     <ClInclude Include="MyController.hpp" />
     <ClInclude Include="MyView.hpp" />
+    <ClInclude Include="PerlinNoise.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\demo\shapes_fs.glsl" />
