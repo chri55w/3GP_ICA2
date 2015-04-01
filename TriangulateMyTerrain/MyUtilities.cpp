@@ -41,7 +41,6 @@ std::vector<glm::vec3> MyUtilities::calculateNormals(std::vector<GLuint> element
 
 		glm::vec3 crossProd = cross(coplanarBA, coplanarCA);
 
-		//glm::vec3 norm = normalize(crossProd);
 
 		faceNormals[elements[i]] += crossProd;
 		faceNormals[elements[i + 1]] += crossProd;
@@ -54,13 +53,32 @@ std::vector<glm::vec3> MyUtilities::calculateNormals(std::vector<GLuint> element
 	return faceNormals;
 }
 
-void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX) {
+void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const std::vector<glm::vec3> *normals, int octaves, float frequency, float lacunarity, float gain, float scale) {
+
 	unsigned int seed = 237;
 	PerlinNoise pn(seed);
 
 	for (int i = 0; i < positions.size(); i++) {
-		double noise = pn.noise(positions[i].r, positions[i].g, 0.8);
+		double noise = brownian(positions[i], octaves, frequency, lacunarity, gain, pn);
+		
+		noise *= scale;
 
-		positions[i].g *= noise;
+		glm::vec3 noiseVec = glm::vec3(normals->at(i).x * noise, normals->at(i).y * noise, normals->at(i).z * noise);
+
+		positions[i] += noiseVec;
 	}
+	
+}
+double MyUtilities::brownian(glm::vec3 position, int octaves, float frequency, float lacunarity, float gain, PerlinNoise &perNoise) {
+
+	double total = 0.0;
+	float amplitude = gain;
+
+
+	for (int i = 0; i < octaves; i++) {
+		total += perNoise.noise((float)position.x * frequency, (float)position.y * frequency, (float) position.z * frequency) * amplitude;
+		frequency *= lacunarity;
+		amplitude *= gain;
+	}
+	return total;
 }

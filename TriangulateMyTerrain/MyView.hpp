@@ -61,5 +61,7 @@ class MyView : public tygra::WindowViewDelegate {
 		const int zIndices = subDivisionsZ + 1;
 		const int xIndices = subDivisionsX + 1;
 
+		void applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX);
+
 
 };

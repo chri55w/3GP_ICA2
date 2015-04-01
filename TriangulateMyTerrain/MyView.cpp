@@ -157,8 +157,8 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	const int spacingX = sizeX / subDivisionsX;
 
 	//                    Height Image Width and Height are LESS one to put values in range of 0-height-1 and 0-width-1
-	const float heightImageWidth = height_image.width - 1;
-	const float heightImageHeight = height_image.height - 1;
+	const float heightImageWidth = height_image.width() - 1;
+	const float heightImageHeight = height_image.height() - 1;
 
 	for (int z = 0; z < zIndices; z++) {
 
@@ -179,9 +179,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 			positions.push_back(new_pos);
 		}
 	}
-
-	MyUtilities::applyNoiseToTerrain(positions, spacingX);
-
+	
 	int quadOrigin = 0;
 	for (int z = 0; z < subDivisionsZ; z++) {
 
@@ -214,6 +212,8 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	}
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
+
+	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 256.f, 2.0, 0.5, 80);
 
 	//Populate VBO's
 
@@ -335,3 +335,14 @@ for (const auto& pos : scene_->getAllShapePositions()) {
 }
 }
 
+
+void MyView::applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX) {
+	unsigned int seed = 237;
+	PerlinNoise pn(seed);
+
+	for (int i = 0; i < positions.size(); i++) {
+		double noise = pn.noise(positions[i].r, positions[i].g, 0.8);
+
+		positions[i].g *= noise;
+	}
+}
