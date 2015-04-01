@@ -64,6 +64,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\external\lib\$(Platform)\v$(PlatformToolsetVersion)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw.lib;libpng.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -112,6 +113,7 @@
     <ClCompile Include="MyController.cpp" />
     <ClCompile Include="MyView.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
+    <ClCompile Include="MyUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\include\SceneModel\Camera.hpp" />
@@ -120,6 +122,7 @@
     <ClInclude Include="MyController.hpp" />
     <ClInclude Include="MyView.hpp" />
     <ClInclude Include="PerlinNoise.h" />
+    <ClInclude Include="MyUtilities.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\demo\shapes_fs.glsl" />
