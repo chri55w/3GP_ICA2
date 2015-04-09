@@ -52,14 +52,11 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
-		
-		const int subDivisionsZ = 256;
-		const int subDivisionsX = 256;
+		const int zIndices = 256;
+		const int xIndices = 256;
 
-		// Indices uses number of subdivisions plus one for the final line of points for the quads due to each quad sharing
-		//                                                                 one point along each axis except the final point
-		const int zIndices = subDivisionsZ + 1;
-		const int xIndices = subDivisionsX + 1;
+		const int subDivisionsZ = 255;
+		const int subDivisionsX = 255;
 
 		void applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX);
 

@@ -111,6 +111,7 @@
     <ClCompile Include="..\external\src\tygra\Window.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyController.cpp" />
+    <ClCompile Include="MyFrustum.cpp" />
     <ClCompile Include="MyView.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="MyUtilities.cpp" />
@@ -120,6 +121,7 @@
     <ClInclude Include="..\external\include\SceneModel\Context.hpp" />
     <ClInclude Include="..\external\src\SceneModel\FirstPersonMovement.hpp" />
     <ClInclude Include="MyController.hpp" />
+    <ClInclude Include="MyFrustum.h" />
     <ClInclude Include="MyView.hpp" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="MyUtilities.h" />

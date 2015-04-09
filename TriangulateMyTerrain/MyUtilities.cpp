@@ -14,7 +14,8 @@ glm::vec3 MyUtilities::cross(glm::vec3 V1, glm::vec3 V2) {
 
 	return normal;
 }
-
+//Developed this then found out openGL has its own normalize funtion.
+//		Left this function in use to demonstrate my own function that does the exact same thing. ENJOY! 
 glm::vec3 MyUtilities::normalize(glm::vec3 vec) {
 	glm::vec3 normalizedVec;
 
@@ -28,11 +29,13 @@ glm::vec3 MyUtilities::normalize(glm::vec3 vec) {
 
 	return normalizedVec;
 }
+//Normal Vector Calculation with reference to the following:
+//			http://www.lighthouse3d.com/opengl/terrain/index.php3?normals
 
 std::vector<glm::vec3> MyUtilities::calculateNormals(std::vector<GLuint> elements, std::vector<glm::vec3> positions) {
 
-	std::vector<glm::vec3> faceNormals;
-	faceNormals.resize(positions.size());
+	std::vector<glm::vec3> vertexNormals;
+	vertexNormals.resize(positions.size());
 
 	for (int i = 0; i < elements.size(); i += 3) {
 
@@ -42,16 +45,19 @@ std::vector<glm::vec3> MyUtilities::calculateNormals(std::vector<GLuint> element
 		glm::vec3 crossProd = cross(coplanarBA, coplanarCA);
 
 
-		faceNormals[elements[i]] += crossProd;
-		faceNormals[elements[i + 1]] += crossProd;
-		faceNormals[elements[i + 2]] += crossProd;
+		vertexNormals[elements[i]] += crossProd;
+		vertexNormals[elements[i + 1]] += crossProd;
+		vertexNormals[elements[i + 2]] += crossProd;
 	}
-	for (int i = 0; i < faceNormals.size(); i++) {
-		faceNormals[i] = normalize(faceNormals[i]);
+	for (int i = 0; i < vertexNormals.size(); i++) {
+		vertexNormals[i] = normalize(vertexNormals[i]);
 	}
 
-	return faceNormals;
+	return vertexNormals;
 }
+
+//Brownian Motion with Reference to the following:
+//			https://code.google.com/p/fractalterraingeneration/wiki/Fractional_Brownian_Motion
 
 void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const std::vector<glm::vec3> *normals, int octaves, float frequency, float lacunarity, float gain, float scale) {
 
@@ -60,7 +66,7 @@ void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const s
 
 	for (int i = 0; i < positions.size(); i++) {
 		double noise = brownian(positions[i], octaves, frequency, lacunarity, gain, pn);
-		
+
 		noise *= scale;
 
 		glm::vec3 noiseVec = glm::vec3(normals->at(i).x * noise, normals->at(i).y * noise, normals->at(i).z * noise);
@@ -76,7 +82,7 @@ double MyUtilities::brownian(glm::vec3 position, int octaves, float frequency, f
 
 
 	for (int i = 0; i < octaves; i++) {
-		total += perNoise.noise((float)position.x * frequency, (float)position.y * frequency, (float) position.z * frequency) * amplitude;
+		total += perNoise.noise((float)position.x * frequency, (float)position.y * frequency, (float)position.z * frequency) * amplitude;
 		frequency *= lacunarity;
 		amplitude *= gain;
 	}

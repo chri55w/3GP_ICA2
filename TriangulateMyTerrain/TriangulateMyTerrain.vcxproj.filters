@@ -54,6 +54,7 @@
     <ClCompile Include="MyUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MyFrustum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MyController.hpp">
@@ -77,6 +78,7 @@
     <ClInclude Include="MyUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MyFrustum.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\demo\terrain_fs.glsl">

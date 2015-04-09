@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "MyUtilities.h"
+#include "MyFrustum.h"
 
 MyView::MyView() {
 }
@@ -160,26 +161,32 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	const float heightImageWidth = height_image.width() - 1;
 	const float heightImageHeight = height_image.height() - 1;
 
+
 	for (int z = 0; z < zIndices; z++) {
 
 		for (int x = 0; x < xIndices; x++) { 
 
             //      Modified X and Modified Z are PLUS one to return values to 1-height and 1-width after the division.
             
-			int modifiedX = (heightImageWidth / subDivisionsX) * x + 1;
-			int modifiedZ = (heightImageHeight / subDivisionsZ) * z + 1;
+			int modifiedX = (heightImageWidth / xIndices) * x + 1;
+			int modifiedZ = (heightImageHeight / zIndices) * z + 1;
 
             //   Position height fetches a height from the height image using the modified X coordinate and the flipped
             //                                                    modified Z which accounts for direction of the cubes.
             //                                         The Z value is also flipped in the creation of the new position.
-            float heightMapY = (*(uint8_t*)height_image(-modifiedZ, modifiedX));
+            float heightMapY = (*(uint8_t*)height_image(modifiedX, modifiedZ));
+
+			//divide height map y value by 255 to push it into a 0-1 value ready to be scaled
+			heightMapY /= 255.0f;
+
+			//scale the height map y value up to the provided size y value;
+			heightMapY *= sizeY;
 						
-			glm::vec3 new_pos = glm::vec3(spacingX * x, heightMapY-60, -spacingZ * z);
+			glm::vec3 new_pos = glm::vec3(spacingX * x, heightMapY, -spacingZ * z);
 
 			positions.push_back(new_pos);
 		}
 	}
-	
 	int quadOrigin = 0;
 	for (int z = 0; z < subDivisionsZ; z++) {
 
@@ -213,7 +220,9 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
-	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 256.f, 2.0, 0.5, 80);
+	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 128.0f, 2.0, 0.5, 40);
+
+	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
 	//Populate VBO's
 
@@ -271,7 +280,7 @@ void MyView::windowViewDidStop(std::shared_ptr<tygra::Window> window) {
 
 void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 	assert(scene_ != nullptr);
-
+	
 	GLint viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);
 	const float aspect_ratio = viewport[2] / (float)viewport[3];
@@ -279,70 +288,60 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 	const auto& camera = scene_->getCamera();
 	glm::mat4 projection_xform = glm::perspective(camera.getVerticalFieldOfViewInDegrees(), aspect_ratio, camera.getNearPlaneDistance(), camera.getFarPlaneDistance());
 	glm::vec3 camera_pos = camera.getPosition();
-glm::vec3 camera_at = camera.getPosition() + camera.getDirection();
-glm::vec3 world_up{ 0, 1, 0 };
-glm::mat4 view_xform = glm::lookAt(camera_pos, camera_at, world_up);
+	glm::vec3 camera_at = camera.getPosition() + camera.getDirection();
+	glm::vec3 world_up{ 0, 1, 0 };
+	glm::mat4 view_xform = glm::lookAt(camera_pos, camera_at, world_up);
 
 
-/* TODO: you are free to modify any of the drawing code below */
+	/* TODO: you are free to modify any of the drawing code below */
+
+	//Create frustrum planes
+	MyFrustum::defaultFrustum()->createFrustum();
+
+	glClearColor(0.f, 0.f, 0.25f, 0.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-glClearColor(0.f, 0.f, 0.25f, 0.f);
-glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, shade_normals_ ? GL_FILL : GL_LINE);
 
+	glUseProgram(terrain_sp_);
 
-glEnable(GL_DEPTH_TEST);
-glEnable(GL_CULL_FACE);
-glPolygonMode(GL_FRONT_AND_BACK, shade_normals_ ? GL_FILL : GL_LINE);
+	GLuint shading_id = glGetUniformLocation(terrain_sp_, "use_normal");
+	glUniform1i(shading_id, shade_normals_);
 
-glUseProgram(terrain_sp_);
+	glm::mat4 world_xform = glm::mat4(1);
+	glm::mat4 view_world_xform = view_xform * world_xform;
 
-GLuint shading_id = glGetUniformLocation(terrain_sp_, "use_normal");
-glUniform1i(shading_id, shade_normals_);
+	GLuint projection_xform_id = glGetUniformLocation(terrain_sp_, "projection_xform");
+	glUniformMatrix4fv(projection_xform_id, 1, GL_FALSE, glm::value_ptr(projection_xform));
 
-glm::mat4 world_xform = glm::mat4(1);
-glm::mat4 view_world_xform = view_xform * world_xform;
-
-GLuint projection_xform_id = glGetUniformLocation(terrain_sp_, "projection_xform");
-glUniformMatrix4fv(projection_xform_id, 1, GL_FALSE, glm::value_ptr(projection_xform));
-
-GLuint view_world_xform_id = glGetUniformLocation(terrain_sp_, "view_world_xform");
-glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE, glm::value_ptr(view_world_xform));
-
-glBindVertexArray(terrain_mesh_.vao);
-glDrawElements(GL_TRIANGLES, terrain_mesh_.element_count, GL_UNSIGNED_INT, 0);
-
-
-glEnable(GL_DEPTH_TEST);
-glEnable(GL_CULL_FACE);
-glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-glUseProgram(shapes_sp_);
-
-projection_xform_id = glGetUniformLocation(shapes_sp_, "projection_xform");
-glUniformMatrix4fv(projection_xform_id, 1, GL_FALSE, glm::value_ptr(projection_xform));
-
-glBindVertexArray(cube_vao_);
-
-for (const auto& pos : scene_->getAllShapePositions()) {
-	world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
-	view_world_xform = view_xform * world_xform;
-
-	view_world_xform_id = glGetUniformLocation(shapes_sp_, "view_world_xform");
+	GLuint view_world_xform_id = glGetUniformLocation(terrain_sp_, "view_world_xform");
 	glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE, glm::value_ptr(view_world_xform));
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-}
-}
+	glBindVertexArray(terrain_mesh_.vao);
+	glDrawElements(GL_TRIANGLES, terrain_mesh_.element_count, GL_UNSIGNED_INT, 0);
 
 
-void MyView::applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX) {
-	unsigned int seed = 237;
-	PerlinNoise pn(seed);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	for (int i = 0; i < positions.size(); i++) {
-		double noise = pn.noise(positions[i].r, positions[i].g, 0.8);
+	glUseProgram(shapes_sp_);
 
-		positions[i].g *= noise;
+	projection_xform_id = glGetUniformLocation(shapes_sp_, "projection_xform");
+	glUniformMatrix4fv(projection_xform_id, 1, GL_FALSE, glm::value_ptr(projection_xform));
+
+	glBindVertexArray(cube_vao_);
+
+	for (const auto& pos : scene_->getAllShapePositions()) {
+		world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
+		view_world_xform = view_xform * world_xform;
+
+		view_world_xform_id = glGetUniformLocation(shapes_sp_, "view_world_xform");
+		glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE, glm::value_ptr(view_world_xform));
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 }
