@@ -361,29 +361,31 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 
 void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 
-	int heightImageWidth = xIndices/4;
-	int heightImageHeight = zIndices/4;
+	int lowResWidth = xIndices/3;
+	int lowResHeight = zIndices/3;
 
 	std::vector<glm::vec3> ctrlPositions;
 
-	int offsetIntoPositions = 0;
-	for (int z = 0; z < heightImageHeight-1; z++) {
-		for (int x = 0; x < heightImageWidth; x++) {
+	for (int z = 0; z < lowResHeight; z++) {
+		for (int x = 0; x < lowResWidth; x++) {
+			int offsetIntoPositions = (x * 3) + ((z * 3) * xIndices);
 
-			ctrlPositions.push_back(positions[offsetIntoPositions]);
-			ctrlPositions.push_back(positions[offsetIntoPositions + 4]);
-			ctrlPositions.push_back(positions[offsetIntoPositions + (xIndices * 4)]);
-			ctrlPositions.push_back(positions[offsetIntoPositions + (xIndices * 4) + 4]);
+			int zeroZeroOffset = offsetIntoPositions;
+			int oneZeroOffset = offsetIntoPositions + 3;
+			int zeroOneOffset = offsetIntoPositions + (xIndices * 3);
+			int oneOneOffset = offsetIntoPositions + (xIndices * 3) + 3;
 
-			positions[offsetIntoPositions].y += 1;
-			positions[offsetIntoPositions + 4].y += 1;
-			positions[offsetIntoPositions + (xIndices * 4)].y += 1;
-			positions[offsetIntoPositions + (xIndices * 4) + 4].y += 1;
 
-			offsetIntoPositions += 4;
+			ctrlPositions.push_back(positions[zeroZeroOffset]);
+			ctrlPositions.push_back(positions[oneZeroOffset]);
+			ctrlPositions.push_back(positions[zeroOneOffset]);
+			ctrlPositions.push_back(positions[oneOneOffset]);
+
+			positions[zeroZeroOffset].y += 1;
+			positions[oneZeroOffset].y += 1;
+			positions[zeroOneOffset].y += 1;
+			positions[oneOneOffset].y += 1;
+
 		}
-		offsetIntoPositions += (xIndices * 3);
-		break;
 	}
-	int i = 0;
 }

@@ -52,8 +52,8 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
-		const int zIndices = 32;
-		const int xIndices = 32;
+		const int zIndices = 256;
+		const int xIndices = 256;
 
 		const int subDivisionsZ = zIndices - 1;
 		const int subDivisionsX = xIndices - 1;
