@@ -147,9 +147,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	const float sizeX = scene_->getTerrainSizeX();
 	const float sizeY = scene_->getTerrainSizeY();
 	const float sizeZ = scene_->getTerrainSizeZ();
-
-	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
-
+	
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> terrainNormals;
 	std::vector<GLuint> elements;
@@ -157,32 +155,13 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	const int spacingZ = sizeZ / subDivisionsZ;
 	const int spacingX = sizeX / subDivisionsX;
 
-	//                    Height Image Width and Height are LESS one to put values in range of 0-height-1 and 0-width-1
-	const float heightImageWidth = height_image.width() - 1;
-	const float heightImageHeight = height_image.height() - 1;
-
 
 	for (int z = 0; z < zIndices; z++) {
 
 		for (int x = 0; x < xIndices; x++) { 
-
-            //      Modified X and Modified Z are PLUS one to return values to 1-height and 1-width after the division.
-            
-			int modifiedX = (heightImageWidth / xIndices) * x + 1;
-			int modifiedZ = (heightImageHeight / zIndices) * z + 1;
-
-            //   Position height fetches a height from the height image using the modified X coordinate and the flipped
-            //                                                    modified Z which accounts for direction of the cubes.
-            //                                         The Z value is also flipped in the creation of the new position.
-            float heightMapY = (*(uint8_t*)height_image(modifiedX, modifiedZ));
-
-			//divide height map y value by 255 to push it into a 0-1 value ready to be scaled
-			heightMapY /= 255.0f;
-
-			//scale the height map y value up to the provided size y value;
-			heightMapY *= sizeY;
-						
-			glm::vec3 new_pos = glm::vec3(spacingX * x, heightMapY, -spacingZ * z);
+			
+			//glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
+			glm::vec3 new_pos = glm::vec3(x, 0, -z);
 
 			positions.push_back(new_pos);
 		}
@@ -218,9 +197,13 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
+	//applyHeightMap(sizeY, positions);
+
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
-	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 128.0f, 2.0, 0.5, 40);
+	applyBezier(positions);
+
+	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 512.0f, 2.0, 0.5, 4);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
@@ -344,4 +327,63 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
+}
+void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
+
+	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
+
+	//      Height Image Width and Height are LESS one to put values in range of 0-height-1 and 0-width-1
+	const float heightImageWidth = height_image.width() - 1;
+	const float heightImageHeight = height_image.height() - 1;
+
+	//      Modified X and Modified Z are PLUS one to return values to 1-height and 1-width after the division.
+	for (int z = 0; z < zIndices; z++) {
+		for (int x = 0; x < xIndices; x++) {
+
+			int modifiedX = (heightImageWidth / xIndices) * x + 1;
+			int modifiedZ = (heightImageHeight / zIndices) * z + 1;
+
+			//   Position height fetches a height from the height image using the modified X coordinate and the flipped
+			//                                                    modified Z which accounts for direction of the cubes.
+			//                                         The Z value is also flipped in the creation of the new position.
+			float heightMapY = (*(uint8_t*)height_image(modifiedX, modifiedZ));
+
+			//divide height map y value by 255 to push it into a 0-1 value ready to be scaled
+			heightMapY /= 255.0f;
+
+			//scale the height map y value up to the provided size y value;
+			heightMapY *= sizeY;
+
+			positions[x + z * xIndices].y = heightMapY;
+		}
+	}
+}
+
+void MyView::applyBezier(std::vector<glm::vec3> &positions) {
+
+	int heightImageWidth = xIndices/4;
+	int heightImageHeight = zIndices/4;
+
+	std::vector<glm::vec3> ctrlPositions;
+
+	int offsetIntoPositions = 0;
+	for (int z = 0; z < heightImageHeight-1; z++) {
+		for (int x = 0; x < heightImageWidth; x++) {
+
+			ctrlPositions.push_back(positions[offsetIntoPositions]);
+			ctrlPositions.push_back(positions[offsetIntoPositions + 4]);
+			ctrlPositions.push_back(positions[offsetIntoPositions + (xIndices * 4)]);
+			ctrlPositions.push_back(positions[offsetIntoPositions + (xIndices * 4) + 4]);
+
+			positions[offsetIntoPositions].y += 1;
+			positions[offsetIntoPositions + 4].y += 1;
+			positions[offsetIntoPositions + (xIndices * 4)].y += 1;
+			positions[offsetIntoPositions + (xIndices * 4) + 4].y += 1;
+
+			offsetIntoPositions += 4;
+		}
+		offsetIntoPositions += (xIndices * 3);
+		break;
+	}
+	int i = 0;
 }

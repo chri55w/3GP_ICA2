@@ -52,12 +52,14 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
-		const int zIndices = 256;
-		const int xIndices = 256;
+		const int zIndices = 32;
+		const int xIndices = 32;
 
-		const int subDivisionsZ = 255;
-		const int subDivisionsX = 255;
+		const int subDivisionsZ = zIndices - 1;
+		const int subDivisionsX = xIndices - 1;
 
+		void applyHeightMap(float sizeY, std::vector<glm::vec3> &positions);
+		void applyBezier(std::vector<glm::vec3> &positions);
 		void applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX);
 
 
