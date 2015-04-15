@@ -152,9 +152,21 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	std::vector<glm::vec3> terrainNormals;
 	std::vector<GLuint> elements;
 	
+
+	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
+
+	const float heightImageWidth = height_image.width();
+	const float heightImageHeight = height_image.height();
+
+	xIndices = heightImageWidth * levelOfDetail;
+	zIndices = heightImageHeight * levelOfDetail;
+
+	int subDivisionsZ = zIndices - 1;
+	int subDivisionsX = xIndices - 1;
+
+
 	const int spacingZ = sizeZ / subDivisionsZ;
 	const int spacingX = sizeX / subDivisionsX;
-
 
 	for (int z = 0; z < zIndices; z++) {
 
@@ -198,8 +210,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	}
 
 	applyHeightMap(sizeY, positions);
-
-	//positions[4095].y = 50;
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 	
@@ -363,29 +373,32 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 
 void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 
-	int lowResWidth = xIndices / 3;
-	int lowResHeight = zIndices / 3;
+	int lowResWidth = xIndices / (levelOfDetail+1);
+	int lowResHeight = zIndices / (levelOfDetail+1);
 
 	int highResXOffset = 0;
 	int highResZOffset = 0;
 
+	std::vector<glm::vec2> UVs;
+
+	for (int v = 0; v < levelOfDetail + 1; v++) {
+		for (int u = 0; u < levelOfDetail + 1; u++) {
+			glm::vec2 UVCoord = glm::vec2(u / (float)levelOfDetail, v / (float)levelOfDetail);
+			UVs.push_back(UVCoord);
+		}
+	}
+
 	//Loop through the points taken from the height image
-	for (int z = 0; z < lowResHeight; z++) {
-		std::vector<glm::vec3> points1;
-		std::vector<glm::vec3> points2;
-		std::vector<glm::vec3> points3;
-		std::vector<glm::vec3> points4;
+	for (int z = 0; z < lowResHeight-1; z++) {
 
-		std::vector<std::vector<glm::vec3>> patchPoints;
-
-		for (int x = 0; x < lowResWidth; x++) {
-
-
-			points1.resize(4);
-			points2.resize(4);
-			points3.resize(4);
-			points4.resize(4);
-			patchPoints.resize(4);
+		for (int x = 0; x < lowResWidth-1; x++) {
+			/*
+			std::vector<glm::vec3> points1{ size_t(levelOfDetail + 1) };
+			std::vector<glm::vec3> points2{ size_t(levelOfDetail + 1) };
+			std::vector<glm::vec3> points3{ size_t(levelOfDetail + 1) };
+			std::vector<glm::vec3> points4{ size_t(levelOfDetail + 1) };
+			*/
+			std::vector<std::vector<glm::vec3>> patchPoints{ size_t(levelOfDetail + 1) };
 
 			int highResOffset = highResXOffset + (highResZOffset * xIndices);
 			/*
@@ -394,7 +407,20 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 					P3		P4		P5		P6
 					C1		P1		P2		C2
 			*/
-			//Get all control point offsets
+			int zPatchOffset = 0;
+			for (int zA = 0; zA < levelOfDetail+1; zA++) {
+				std::vector<glm::vec3> points{ size_t(levelOfDetail + 1) };
+				int xPatchOffset = 0;
+				for (int xA = 0; xA < levelOfDetail+1; xA++) {
+					int patchOffset = xPatchOffset + (zPatchOffset * xIndices);
+					points[xA] = positions[highResOffset + patchOffset];
+					xPatchOffset++;
+				}
+				zPatchOffset++;
+				patchPoints[zA] = points;
+				points.clear();
+			}
+			/*
 			int ctrlPt1 = highResOffset;
 			int ctrlPt2 = highResOffset + 3;
 			int ctrlPt3 = highResOffset + (xIndices * 3);
@@ -437,35 +463,28 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 			patchPoints[1] = points2;
 			patchPoints[2] = points3;
 			patchPoints[3] = points4;
+			*/
 
-			std::vector<glm::vec2> UVs;
-
-			for (int v = 0; v < 4; v++) {
-				for (int u = 0; u < 4; u++) {
-					glm::vec2 UVCoord = glm::vec2(u / 3.f, v / 3.f);
-					UVs.push_back(UVCoord);
-				}
-			}
-			int zPatchOffset = 0;
-			for (int z = 0; z < 4; z++) {
+			zPatchOffset = 0;
+			for (int zB = 0; zB < levelOfDetail; zB++) {
 				int xPatchOffset = 0;
-				for (int x = 0; x < 4; x++) {
+				for (int xB = 0; xB < levelOfDetail; xB++) {
 					int patchOffset = xPatchOffset + (zPatchOffset * xIndices);
-					positions[patchOffset + highResOffset].y = BezierSurface(patchPoints, UVs[x + (z * 4)].x, UVs[x + (z * 4)].y).y;
+					positions[patchOffset + highResOffset].y = BezierSurface(patchPoints, UVs[xB + (zB * (levelOfDetail + 1))].x, UVs[xB + (zB * (levelOfDetail+1))].y).y;
 					xPatchOffset++;
 				}
 				zPatchOffset++;
 			}
 
-			highResXOffset += 3;
+			highResXOffset += levelOfDetail;
 		}
 		std::cout << std::to_string(z) << std::endl;
-		highResZOffset += 3;
+		highResZOffset += levelOfDetail;
 		highResXOffset = 0;
 	}
 }
 
-glm::vec3 MyView::BezierSurface(std::vector<std::vector<glm::vec3>> cps, float u, float v)
+glm::vec3 MyView::BezierSurface(std::vector<std::vector<glm::vec3>>& cps, float u, float v)
 {
 	std::vector<glm::vec3> curve{ cps.size() };
 	for (int j = 0; j < cps.size(); ++j)
@@ -474,43 +493,6 @@ glm::vec3 MyView::BezierSurface(std::vector<std::vector<glm::vec3>> cps, float u
 	}
 	return bezierCurve(curve, v);
 }
-/*
-glm::vec3 MyView::bezierSurface(const std::vector<glm::vec3>& control_points, float u, float v) {
-	std::vector<glm::vec3> firstCurve;
-	firstCurve.push_back(control_points[0]);
-	firstCurve.push_back(control_points[1]);
-	firstCurve.push_back(control_points[2]);
-	firstCurve.push_back(control_points[3]);
-
-	std::vector<glm::vec3> secondCurve;
-	secondCurve.push_back(control_points[0]);
-	secondCurve.push_back(control_points[4]);
-	secondCurve.push_back(control_points[8]);
-	secondCurve.push_back(control_points[12]);
-
-	std::vector<glm::vec3> thirdCurve;
-	thirdCurve.push_back(control_points[3]);
-	thirdCurve.push_back(control_points[7]);
-	thirdCurve.push_back(control_points[11]);
-	thirdCurve.push_back(control_points[15]);
-
-	std::vector<glm::vec3> fourthCurve;
-	fourthCurve.push_back(control_points[12]);
-	fourthCurve.push_back(control_points[13]);
-	fourthCurve.push_back(control_points[14]);
-	fourthCurve.push_back(control_points[15]);
-
-	glm::vec3 firstCurvePos = bezierCurve(firstCurve, u);
-	glm::vec3 secondCurvePos = bezierCurve(firstCurve, v);
-	glm::vec3 thirdCurvePos = bezierCurve(firstCurve, v);
-	glm::vec3 fourthCurvePos = bezierCurve(firstCurve, u);
-
-	glm::vec3 bezierPosition = (firstCurvePos + secondCurvePos + thirdCurvePos + fourthCurvePos);
-	bezierPosition /= 4;
-
-	return bezierPosition;
-}
-*/
 glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& ctrlPoints, float point) {
 	float a = ((1 - point) * (1 - point) * (1 - point));
 	float b = 3 * point * ((1 - point) * (1 - point));
