@@ -59,7 +59,9 @@ class MyView : public tygra::WindowViewDelegate {
 		const int subDivisionsX = xIndices - 1;
 
 		void applyHeightMap(float sizeY, std::vector<glm::vec3> &positions);
-		void applyBezier(std::vector<glm::vec3> &positions);
+		void applyBezier(std::vector<glm::vec3> &positions); 
+		glm::vec3 bezierSurface(const std::vector<glm::vec3>& control_points, float u, float v);
+		glm::vec3 bezierCurve(const std::vector<glm::vec3>& ctrlPoints, float point);
 		void applyNoiseToTerrain(std::vector<glm::vec3> &positions, int spacingX);
 
 

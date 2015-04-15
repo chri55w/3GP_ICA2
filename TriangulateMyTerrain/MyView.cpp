@@ -160,8 +160,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 		for (int x = 0; x < xIndices; x++) { 
 			
-			//glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
-			glm::vec3 new_pos = glm::vec3(x, 0, -z);
+			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
 
 			positions.push_back(new_pos);
 		}
@@ -197,13 +196,13 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
-	//applyHeightMap(sizeY, positions);
+	applyHeightMap(sizeY, positions);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
-
+	
 	applyBezier(positions);
 
-	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 512.0f, 2.0, 0.5, 4);
+	//MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 512.0f, 2.0, 0.5, 4);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
@@ -361,31 +360,132 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 
 void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 
-	int lowResWidth = xIndices/3;
-	int lowResHeight = zIndices/3;
+	int lowResWidth = xIndices / 3;
+	int lowResHeight = zIndices / 3;
 
-	std::vector<glm::vec3> ctrlPositions;
+	int highResXOffset = 0;
+	int highResZOffset = 0;
 
-	for (int z = 0; z < lowResHeight; z++) {
+	//Loop through the points taken from the height image
+	for (int z = 0; z < 1; z++) {
 		for (int x = 0; x < lowResWidth; x++) {
-			int offsetIntoPositions = (x * 3) + ((z * 3) * xIndices);
 
-			int zeroZeroOffset = offsetIntoPositions;
-			int oneZeroOffset = offsetIntoPositions + 3;
-			int zeroOneOffset = offsetIntoPositions + (xIndices * 3);
-			int oneOneOffset = offsetIntoPositions + (xIndices * 3) + 3;
+			std::vector<glm::vec3> patchPoints;
 
+			patchPoints.resize(16);
 
-			ctrlPositions.push_back(positions[zeroZeroOffset]);
-			ctrlPositions.push_back(positions[oneZeroOffset]);
-			ctrlPositions.push_back(positions[zeroOneOffset]);
-			ctrlPositions.push_back(positions[oneOneOffset]);
+			int highResOffset = highResXOffset + (highResZOffset * xIndices);
+			/*
+				[	C3		P11		P12		C4
+					P7		P8		P9		P10
+					P3		P4		P5		P6
+					C1		P1		P2		C2
+			*/
+			//Get all control point offsets
+			int ctrlPt1 = highResOffset;
+			int ctrlPt2 = highResOffset + 3;
+			int ctrlPt3 = highResOffset + (xIndices * 3);
+			int ctrlPt4 = highResOffset + (xIndices * 3) + 3;
 
-			positions[zeroZeroOffset].y += 1;
-			positions[oneZeroOffset].y += 1;
-			positions[zeroOneOffset].y += 1;
-			positions[oneOneOffset].y += 1;
+			int bezPt1 = highResOffset + 1;
+			int bezPt2 = highResOffset + 2;
+			int bezPt3 = highResOffset + xIndices;
+			int bezPt4 = highResOffset + xIndices + 1;
+			int bezPt5 = highResOffset + xIndices + 2;
+			int bezPt6 = highResOffset + xIndices + 3;
+			int bezPt7 = highResOffset + (xIndices * 2);
+			int bezPt8 = highResOffset + (xIndices * 2) + 1;
+			int bezPt9 = highResOffset + (xIndices * 2) + 2;
+			int bezPt10 = highResOffset + (xIndices * 2) + 3;
+			int bezPt11 = highResOffset + (xIndices * 3) + 1;
+			int bezPt12 = highResOffset + (xIndices * 3) + 2;
 
+			patchPoints[0] = positions[ctrlPt1];
+			patchPoints[1] = positions[bezPt1];
+			patchPoints[2] = positions[bezPt2];
+			patchPoints[3] = positions[ctrlPt2];
+			patchPoints[4] = positions[bezPt3];
+			patchPoints[5] = positions[bezPt4];
+			patchPoints[6] = positions[bezPt5];
+			patchPoints[7] = positions[bezPt6];
+			patchPoints[8] = positions[bezPt7];
+			patchPoints[9] = positions[bezPt8];
+			patchPoints[10] = positions[bezPt9];
+			patchPoints[11] = positions[bezPt10];
+			patchPoints[12] = positions[ctrlPt3];
+			patchPoints[13] = positions[bezPt11];
+			patchPoints[14] = positions[bezPt12];
+			patchPoints[15] = positions[ctrlPt4];
+
+			std::vector<glm::vec2> UVs;
+
+			for (int v = 0; v < 4; v++) {
+				for (int u = 0; u < 4; u++) {
+					glm::vec2 UVCoord = glm::vec2(u / 3.f, v / 3.f);
+					UVs.push_back(UVCoord);
+				}
+			}
+			int zPatchOffset = 0;
+			for (int z = 0; z < 4; z++) {
+				int xPatchOffset = 0;
+				for (int x = 0; x < 4; x++) {
+					int patchOffset = xPatchOffset + (zPatchOffset * zIndices);
+					positions[patchOffset + highResOffset].y = bezierSurface(patchPoints, UVs[x + (z * 4)].x, UVs[x + (z * 4)].y).y;
+					xPatchOffset++;
+				}
+				zPatchOffset++;
+			}
+
+			highResXOffset += 3;
 		}
+		highResZOffset += 3;
+		highResXOffset = 0;
 	}
+}
+
+glm::vec3 MyView::bezierSurface(const std::vector<glm::vec3>& control_points, float u, float v) {
+	std::vector<glm::vec3> firstCurve;
+	firstCurve.push_back(control_points[0]);
+	firstCurve.push_back(control_points[1]);
+	firstCurve.push_back(control_points[2]);
+	firstCurve.push_back(control_points[3]);
+
+	std::vector<glm::vec3> secondCurve;
+	secondCurve.push_back(control_points[0]);
+	secondCurve.push_back(control_points[4]);
+	secondCurve.push_back(control_points[8]);
+	secondCurve.push_back(control_points[12]);
+
+	std::vector<glm::vec3> thirdCurve;
+	thirdCurve.push_back(control_points[3]);
+	thirdCurve.push_back(control_points[7]);
+	thirdCurve.push_back(control_points[11]);
+	thirdCurve.push_back(control_points[15]);
+
+	std::vector<glm::vec3> fourthCurve;
+	fourthCurve.push_back(control_points[12]);
+	fourthCurve.push_back(control_points[13]);
+	fourthCurve.push_back(control_points[14]);
+	fourthCurve.push_back(control_points[15]);
+
+	glm::vec3 firstCurvePos = bezierCurve(firstCurve, u);
+	glm::vec3 secondCurvePos = bezierCurve(firstCurve, v);
+	glm::vec3 thirdCurvePos = bezierCurve(firstCurve, v);
+	glm::vec3 fourthCurvePos = bezierCurve(firstCurve, u);
+
+	glm::vec3 bezierPosition = (firstCurvePos + secondCurvePos + thirdCurvePos + fourthCurvePos);
+	bezierPosition /= 4;
+
+	return bezierPosition;
+}
+
+glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& ctrlPoints, float point) {
+	float a = pow((1 - point), 3);
+	float b = 3 * point * pow((1 - point), 2);
+	float c = 3 * (pow(point, 2)) * (1 - point);
+	float d = pow(point, 3);
+
+	glm::vec3 myPos = glm::vec3(a * ctrlPoints[0] + b * ctrlPoints[1] + c * ctrlPoints[2] + d * ctrlPoints[3]);
+
+	return myPos;
 }
