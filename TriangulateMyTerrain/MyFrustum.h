@@ -1,13 +1,13 @@
 #pragma once
+#include <glm/gtc/matrix_transform.hpp>
+#include "MyPlanes.h"
+#include <vector>
 class MyFrustum {
 	public:
-		static MyFrustum *defaultFrustum();
 
-		static void createFrustum();
+		static void generateFrustum(float screenDepth, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
 
 	private:
-		static float frustumPlanes[6][4];
-
-		static MyFrustum *default_frustum_;
+		static std::vector<MyPlanes> m_planes;
 };
 

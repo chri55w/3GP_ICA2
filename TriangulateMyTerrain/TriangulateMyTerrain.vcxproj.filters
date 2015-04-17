@@ -54,7 +54,15 @@
     <ClCompile Include="MyUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyFrustum.cpp" />
+    <ClCompile Include="MyFrustum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyHeightData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyPlanes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MyController.hpp">
@@ -78,7 +86,15 @@
     <ClInclude Include="MyUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MyFrustum.h" />
+    <ClInclude Include="MyHeightData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MyFrustum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MyPlanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\demo\terrain_fs.glsl">

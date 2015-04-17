@@ -8,6 +8,7 @@
 
 #include "MyUtilities.h"
 #include "MyFrustum.h"
+#include "MyHeightData.h"
 
 MyView::MyView() {
 }
@@ -29,7 +30,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	GLint compile_status = 0;
 	GLint link_status = 0;
 
-
+	
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	std::string vertex_shader_string = tygra::stringFromFile("terrain_vs.glsl");
 	const char *vertex_shader_code = vertex_shader_string.c_str();
@@ -151,29 +152,23 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> terrainNormals;
 	std::vector<GLuint> elements;
-	
 
-	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
+	MyHeightData::loadHeightMap(scene_);
 
-	const float heightImageWidth = height_image.width();
-	const float heightImageHeight = height_image.height();
-
-	xIndices = heightImageWidth * levelOfDetail;
-	zIndices = heightImageHeight * levelOfDetail;
+	xIndices = (MyHeightData::getDataWidth() * levelOfDetail);
+	zIndices = (MyHeightData::getDataHeight() * levelOfDetail);
 
 	int subDivisionsZ = zIndices - 1;
 	int subDivisionsX = xIndices - 1;
 
-
-	const int spacingZ = sizeZ / subDivisionsZ;
-	const int spacingX = sizeX / subDivisionsX;
+	const float spacingZ = sizeZ / subDivisionsZ;
+	const float spacingX = sizeX / subDivisionsX;
 
 	for (int z = 0; z < zIndices; z++) {
 
 		for (int x = 0; x < xIndices; x++) { 
 			
 			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
-			//glm::vec3 new_pos = glm::vec3(x, 0, -z);
 
 			positions.push_back(new_pos);
 		}
@@ -209,13 +204,13 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
-	applyHeightMap(sizeY, positions);
+	//applyHeightMap(sizeY, positions);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 	
-	applyBezier(positions);
+	//applyBezier(positions);
 
-	//MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / 512.0f, 2.0, 0.5, 8);
+	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / (zIndices / 2.0f), 2.0, 0.5, 100 / levelOfDetail);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
@@ -290,8 +285,8 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 
 	/* TODO: you are free to modify any of the drawing code below */
 
-	//Create frustrum planes
-	MyFrustum::defaultFrustum()->createFrustum();
+	MyFrustum::generateFrustum(12, projection_xform, view_xform);
+
 
 	glClearColor(0.f, 0.f, 0.25f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -341,30 +336,17 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 	}
 }
 void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
-
-	tygra::Image height_image = tygra::imageFromPNG(scene_->getTerrainHeightMapName());
-
-	//      Height Image Width and Height are LESS one to put values in range of 0-height-1 and 0-width-1
-	const float heightImageWidth = height_image.width() - 1;
-	const float heightImageHeight = height_image.height() - 1;
-
-	//      Modified X and Modified Z are PLUS one to return values to 1-height and 1-width after the division.
+	float sizeModificationHeight = MyHeightData::getDataHeight() / (float)zIndices;
+	float sizeModificationWidth = MyHeightData::getDataWidth() / (float)xIndices;
+	
 	for (int z = 0; z < zIndices; z++) {
 		for (int x = 0; x < xIndices; x++) {
+			
+			int modifiedX = sizeModificationWidth * x;
+			int modifiedZ = sizeModificationWidth * z;
 
-			int modifiedX = (heightImageWidth / xIndices) * x + 1;
-			int modifiedZ = (heightImageHeight / zIndices) * z + 1;
+			float heightMapY = MyHeightData::getHeightValue(modifiedX, modifiedZ) * sizeY;
 
-			//   Position height fetches a height from the height image using the modified X coordinate and the flipped
-			//                                                    modified Z which accounts for direction of the cubes.
-			//                                         The Z value is also flipped in the creation of the new position.
-			float heightMapY = (*(uint8_t*)height_image(modifiedX, modifiedZ));
-
-			//divide height map y value by 255 to push it into a 0-1 value ready to be scaled
-			heightMapY /= 255.0f;
-
-			//scale the height map y value up to the provided size y value;
-			heightMapY *= sizeY;
 
 			positions[x + z * xIndices].y = heightMapY;
 		}
@@ -372,116 +354,89 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 }
 
 void MyView::applyBezier(std::vector<glm::vec3> &positions) {
-
-	int lowResWidth = xIndices / (levelOfDetail+1);
-	int lowResHeight = zIndices / (levelOfDetail+1);
-
-	int highResXOffset = 0;
-	int highResZOffset = 0;
-
 	std::vector<glm::vec2> UVs;
 
-	for (int v = 0; v < levelOfDetail + 1; v++) {
-		for (int u = 0; u < levelOfDetail + 1; u++) {
-			glm::vec2 UVCoord = glm::vec2(u / (float)levelOfDetail, v / (float)levelOfDetail);
+	for (int v = 0; v < levelOfDetail * 4; v++) {
+		for (int u = 0; u < levelOfDetail * 4; u++) {
+			glm::vec2 UVCoord = glm::vec2(u / ((float)levelOfDetail * 4.f), v / ((float)levelOfDetail * 4.f));
 			UVs.push_back(UVCoord);
 		}
 	}
+	int heightImageDataWidth = MyHeightData::getDataWidth();
+	int heightImageDataHeight = MyHeightData::getDataHeight();
+
+	std::vector<std::vector<std::vector<glm::vec3>>> patches;
 
 	//Loop through the points taken from the height image
-	for (int z = 0; z < lowResHeight-1; z++) {
+	for (int z = 0; z < heightImageDataHeight; z += 3) {
 
-		for (int x = 0; x < lowResWidth-1; x++) {
-			/*
-			std::vector<glm::vec3> points1{ size_t(levelOfDetail + 1) };
-			std::vector<glm::vec3> points2{ size_t(levelOfDetail + 1) };
-			std::vector<glm::vec3> points3{ size_t(levelOfDetail + 1) };
-			std::vector<glm::vec3> points4{ size_t(levelOfDetail + 1) };
-			*/
-			std::vector<std::vector<glm::vec3>> patchPoints{ size_t(levelOfDetail + 1) };
-
-			int highResOffset = highResXOffset + (highResZOffset * xIndices);
-			/*
-				[	C3		P11		P12		C4
-					P7		P8		P9		P10
-					P3		P4		P5		P6
-					C1		P1		P2		C2
-			*/
-			int zPatchOffset = 0;
-			for (int zA = 0; zA < levelOfDetail+1; zA++) {
-				std::vector<glm::vec3> points{ size_t(levelOfDetail + 1) };
-				int xPatchOffset = 0;
-				for (int xA = 0; xA < levelOfDetail+1; xA++) {
-					int patchOffset = xPatchOffset + (zPatchOffset * xIndices);
-					points[xA] = positions[highResOffset + patchOffset];
-					xPatchOffset++;
-				}
-				zPatchOffset++;
-				patchPoints[zA] = points;
-				points.clear();
+		for (int x = 0; x < heightImageDataWidth; x += 3) {
+			/*[	C3		P11		P12		C4
+				P7		P8		P9		P10
+				P3		P4		P5		P6
+				C1		P1		P2		C2	]*/
+			std::vector < std::vector<glm::vec3>> ctrlPoints;
+			int pointOffset = x + (z * heightImageDataWidth);
+			for (int zA = 0; zA < 4; zA++) {
+				std::vector<glm::vec3> lineOfCtrlPoints;
+				lineOfCtrlPoints.push_back(positions[pointOffset * levelOfDetail]);
+				lineOfCtrlPoints.push_back(positions[pointOffset * levelOfDetail + (1 * levelOfDetail)]);
+				lineOfCtrlPoints.push_back(positions[pointOffset * levelOfDetail + (2 * levelOfDetail)]);
+				lineOfCtrlPoints.push_back(positions[pointOffset * levelOfDetail + (3 * levelOfDetail)]);
+				pointOffset += heightImageDataWidth * levelOfDetail;
+				ctrlPoints.push_back(lineOfCtrlPoints);
 			}
-			/*
-			int ctrlPt1 = highResOffset;
-			int ctrlPt2 = highResOffset + 3;
-			int ctrlPt3 = highResOffset + (xIndices * 3);
-			int ctrlPt4 = highResOffset + (xIndices * 3) + 3;
-
-			int bezPt1 = highResOffset + 1;
-			int bezPt2 = highResOffset + 2;
-			int bezPt3 = highResOffset + xIndices;
-			int bezPt4 = highResOffset + xIndices + 1;
-			int bezPt5 = highResOffset + xIndices + 2;
-			int bezPt6 = highResOffset + xIndices + 3;
-			int bezPt7 = highResOffset + (xIndices * 2);
-			int bezPt8 = highResOffset + (xIndices * 2) + 1;
-			int bezPt9 = highResOffset + (xIndices * 2) + 2;
-			int bezPt10 = highResOffset + (xIndices * 2) + 3;
-			int bezPt11 = highResOffset + (xIndices * 3) + 1;
-			int bezPt12 = highResOffset + (xIndices * 3) + 2;
-
-			points1[0] = positions[ctrlPt1];
-			points1[1] = positions[bezPt1];
-			points1[2] = positions[bezPt2];
-			points1[3] = positions[ctrlPt2];
-
-			points2[0] = positions[bezPt3];
-			points2[1] = positions[bezPt4];
-			points2[2] = positions[bezPt5];
-			points2[3] = positions[bezPt6];
-
-			points3[0] = positions[bezPt7];
-			points3[1] = positions[bezPt8];
-			points3[2] = positions[bezPt9];
-			points3[3] = positions[bezPt10];
-
-			points4[0] = positions[ctrlPt3];
-			points4[1] = positions[bezPt11];
-			points4[2] = positions[bezPt12];
-			points4[3] = positions[ctrlPt4];
-
-			patchPoints[0] = points1;
-			patchPoints[1] = points2;
-			patchPoints[2] = points3;
-			patchPoints[3] = points4;
-			*/
-
-			zPatchOffset = 0;
-			for (int zB = 0; zB < levelOfDetail; zB++) {
-				int xPatchOffset = 0;
-				for (int xB = 0; xB < levelOfDetail; xB++) {
-					int patchOffset = xPatchOffset + (zPatchOffset * xIndices);
-					positions[patchOffset + highResOffset].y = BezierSurface(patchPoints, UVs[xB + (zB * (levelOfDetail + 1))].x, UVs[xB + (zB * (levelOfDetail+1))].y).y;
-					xPatchOffset++;
-				}
-				zPatchOffset++;
-			}
-
-			highResXOffset += levelOfDetail;
+			patches.push_back(ctrlPoints);
 		}
-		std::cout << std::to_string(z) << std::endl;
-		highResZOffset += levelOfDetail;
-		highResXOffset = 0;
 	}
+	
+	int patchesX = heightImageDataWidth / 3;
+	int patchesZ = heightImageDataHeight / 3;
+	for (int pZ = 0; pZ < patchesZ; pZ++) {
+
+		for (int pX = 0; pX < patchesX; pX++) {
+			int thisPatchOffset = pX + (pZ * patchesX);
+
+			int thisPatchStartingPositionOffset = (pX * levelOfDetail * 3) + ((pZ * levelOfDetail * 3) * (patchesX * levelOfDetail * 3));
+
+
+			for (int v = 0; v < levelOfDetail * 4; v++) {
+				for (int u = 0; u < levelOfDetail * 4; u++) {
+					int posOffset = thisPatchStartingPositionOffset + (u + (v*xIndices));
+
+					positions[posOffset].y = BezierSurface(patches[thisPatchOffset], UVs[u + (v * (levelOfDetail * 4))].x, UVs[u + (v * levelOfDetail * 4)].y).y;
+
+				}
+			}
+		}
+	}
+
+	/*
+	int patchesX = heightImageDataWidth / 3;
+	int patchesZ = heightImageDataHeight / 3;
+	for (int pZ = 0; pZ < patchesZ; pZ++) {
+
+		for (int pX = 0; pX < patchesX; pX++) {
+			int patchOffset = pX + (pZ * patchesX);
+			int patchPositionOffset = patchOffset * (levelOfDetail*3) * 4;
+			int posOffsetZ = 0;
+
+			for (int patchPosZ = 0; patchPosZ < levelOfDetail * 4; patchPosZ++) {
+				int posOffsetX = 0;
+
+					for (int patchPosX = 0; patchPosX < levelOfDetail * 4; patchPosX++) {
+						int posOffset = posOffsetX + (posOffsetZ * zIndices);
+						positions[patchPositionOffset + posOffset].y = BezierSurface(patches[patchOffset], UVs[patchPosX + (patchPosZ * (levelOfDetail * 4))].x, UVs[patchPosX + (patchPosZ * levelOfDetail * 4)].y).y;
+						posOffsetX++;
+
+					}
+					posOffsetZ++;
+
+				}
+			}
+		}
+	}
+	*/
 }
 
 glm::vec3 MyView::BezierSurface(std::vector<std::vector<glm::vec3>>& cps, float u, float v)

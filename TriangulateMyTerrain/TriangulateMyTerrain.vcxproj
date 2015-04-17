@@ -112,6 +112,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyController.cpp" />
     <ClCompile Include="MyFrustum.cpp" />
+    <ClCompile Include="MyHeightData.cpp" />
+    <ClCompile Include="MyPlanes.cpp" />
     <ClCompile Include="MyView.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="MyUtilities.cpp" />
@@ -122,6 +124,8 @@
     <ClInclude Include="..\external\src\SceneModel\FirstPersonMovement.hpp" />
     <ClInclude Include="MyController.hpp" />
     <ClInclude Include="MyFrustum.h" />
+    <ClInclude Include="MyHeightData.h" />
+    <ClInclude Include="MyPlanes.h" />
     <ClInclude Include="MyView.hpp" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="MyUtilities.h" />
