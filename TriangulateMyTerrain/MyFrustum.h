@@ -6,6 +6,7 @@ class MyFrustum {
 	public:
 
 		static void generateFrustum(float screenDepth, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
+		static bool CheckPoint(float x, float y, float z);
 
 	private:
 		static std::vector<MyPlanes> m_planes;

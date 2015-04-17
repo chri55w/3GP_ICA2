@@ -168,8 +168,8 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 		for (int x = 0; x < xIndices; x++) { 
 			
-			//glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
-			glm::vec3 new_pos = glm::vec3(x, 0, -z);
+			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
+			//glm::vec3 new_pos = glm::vec3(x, 0, -z);
 
 
 			positions.push_back(new_pos);
@@ -206,11 +206,11 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
-	//applyHeightMap(sizeY, positions);
+	applyHeightMap(sizeY, positions);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 	
-	applyBezier(positions);
+	//applyBezier(positions);
 
 	//MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / (zIndices / 2.0f), 2.0, 0.5, 100 / levelOfDetail);
 
@@ -356,28 +356,31 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 }
 
 void MyView::applyBezier(std::vector<glm::vec3> &positions) {
+	int heightImageDataWidth = MyHeightData::getDataWidth();
+	int heightImageDataHeight = MyHeightData::getDataHeight();
+
+	int PUVCoordsCount = 4 * levelOfDetail;
+
 	std::vector<glm::vec2> UVs;
 
-	for (int v = 0; v < levelOfDetail * 4; v++) {
-		for (int u = 0; u < levelOfDetail * 4; u++) {
-			glm::vec2 UVCoord = glm::vec2(u / ((float)levelOfDetail * 4.f), v / ((float)levelOfDetail * 4.f));
+	for (int v = 0; v < PUVCoordsCount; v++) {
+		for (int u = 0; u < PUVCoordsCount; u++) {
+			glm::vec2 UVCoord = glm::vec2((float)u / PUVCoordsCount, (float)v / PUVCoordsCount);
 			UVs.push_back(UVCoord);
 		}
 	}
-	int heightImageDataWidth = MyHeightData::getDataWidth();
-	int heightImageDataHeight = MyHeightData::getDataHeight();
 	int patchesX = 0;
 	int patchesZ = 0;
 	std::vector<std::vector<std::vector<glm::vec3>>> patches;
-	/*
+	
 	//Loop through the points taken from the height image
-	for (int z = 0; z < heightImageDataHeight; z += 3) {
-
+	for (int z = 0; z < 3; z += 3) {
+		patchesX = 0;
 		for (int x = 0; x < heightImageDataWidth; x += 3) {
 			/*[	C3		P11		P12		C4
 				P7		P8		P9		P10
 				P3		P4		P5		P6
-				C1		P1		P2		C2	]/
+				C1		P1		P2		C2	]*/
 			std::vector < std::vector<glm::vec3>> ctrlPoints;
 			int pointOffset = x + (z * heightImageDataWidth);
 			for (int zA = 0; zA < 4; zA++) {
@@ -394,37 +397,37 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 		}
 		patchesZ++;
 	}
-	*/
-
+	
+	/*
 	std::vector<std::vector<glm::vec3>> controlPoints;
 
 	std::vector<glm::vec3> line;
 
-	line.push_back(glm::vec3(0, 0, 0));
-	line.push_back(glm::vec3(1, 0, 0));
-	line.push_back(glm::vec3(2, 0, 0));
-	line.push_back(glm::vec3(3, 0, 0));
+	line.push_back(glm::vec3(0, 18 / 10.0f, 0));
+	line.push_back(glm::vec3(1, 9 / 10.0f, 0));
+	line.push_back(glm::vec3(2, 13 / 10.0f, 0));
+	line.push_back(glm::vec3(3, 6 / 10.0f, 0));
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 0, -1);
-	line[1] = glm::vec3(1, 0, -1);
-	line[2] = glm::vec3(2, 0, -1);
-	line[3] = glm::vec3(3, 0, -1);
+	line[0] = glm::vec3(0, 2 / 10.0f, -1);
+	line[1] = glm::vec3(1, 17 / 10.0f, -1);
+	line[2] = glm::vec3(2, 11 / 10.0f, -1);
+	line[3] = glm::vec3(3, 7 / 10.0f, -1);
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 0, -2);
-	line[1] = glm::vec3(1, 0, -2);
-	line[2] = glm::vec3(2, 0, -2);
-	line[3] = glm::vec3(3, 0, -2);
+	line[0] = glm::vec3(0, 20/10.0f, -2);
+	line[1] = glm::vec3(1, 4 / 10.0f, -2);
+	line[2] = glm::vec3(2, 1 / 10.0f, -2);
+	line[3] = glm::vec3(3, 15 / 10.0f, -2);
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 0, -3);
-	line[1] = glm::vec3(1, 0, -3);
-	line[2] = glm::vec3(2, 0, -3);
-	line[3] = glm::vec3(3, 0, -3);
+	line[0] = glm::vec3(0, 19 / 10.0f, -3);
+	line[1] = glm::vec3(1, 10 / 10.0f, -3);
+	line[2] = glm::vec3(2, 12 / 10.0f, -3);
+	line[3] = glm::vec3(3, 16 / 10.0f, -3);
 
 	controlPoints.push_back(line);
 
@@ -432,7 +435,8 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 
 	patchesX++;
 	patchesZ++;
-
+	*/
+	
 	for (int pZ = 0; pZ < patchesZ; pZ++) {
 
 		for (int pX = 0; pX < patchesX; pX++) {
@@ -440,8 +444,8 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 
 			int thisPatchStartingPositionOffset = (pX * levelOfDetail * 3) + ((pZ * levelOfDetail * 3) * (patchesX * levelOfDetail * 3));
 			
-			for (int v = 0; v < levelOfDetail * 4; v++) {
-				for (int u = 0; u < levelOfDetail * 4; u++) {
+			for (int v = 0; v < PUVCoordsCount; v++) {
+				for (int u = 0; u < PUVCoordsCount; u++) {
 					int posOffset = thisPatchStartingPositionOffset + (u + (v*xIndices));
 
 					positions[posOffset] = BezierSurface(patches[thisPatchOffset], UVs[u + (v * (levelOfDetail * 4))].x, UVs[u + (v * levelOfDetail * 4)].y);
@@ -450,7 +454,9 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 			}
 		}
 	}
+
 	
+	int i = 0;
 	/*
 	int patchesX = heightImageDataWidth / 3;
 	int patchesZ = heightImageDataHeight / 3;
@@ -475,23 +481,27 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 	}*/
 }
 
-glm::vec3 MyView::BezierSurface(std::vector<std::vector<glm::vec3>>& cps, float u, float v)
+glm::vec3 MyView::BezierSurface(const std::vector<std::vector<glm::vec3>>& control_points, float u, float v)
 {
-	std::vector<glm::vec3> curve{ cps.size() };
-	for (int j = 0; j < cps.size(); ++j)
+	std::vector<glm::vec3> curve{ control_points.size() };
+	for (unsigned int j = 0; j < control_points.size(); j++)
 	{
-		curve[j] = bezierCurve(cps[j], u);
+		curve[j] = bezierCurve(control_points[j], u);
 	}
 	return bezierCurve(curve, v);
 }
 
-glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& ctrlPoints, float point) {
+glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& control_points, float step)
+{
 	float curve[4];
-	
-	curve[0] = (1 - point) * (1 - point) * (1 - point);
-	curve[1] = 3 * point * (1 - point) * (1 - point);
-	curve[2] = 3 * point * point * (1 - point);
-	curve[3] = point * point * point;
 
-	return (ctrlPoints[0] * curve[0] + ctrlPoints[1] * curve[1] + ctrlPoints[2] * curve[2] + ctrlPoints[3] * curve[3]);
+	/*I do not use pow() here because pow has a large over head which will
+	slow down the load especially with the number of times this function is called*/
+	curve[0] = (1 - step) * (1 - step) * (1 - step);
+	curve[1] = 3 * step * (1 - step) * (1 - step);
+	curve[2] = 3 * step * step * (1 - step);
+	curve[3] = step * step * step;
+
+	return (control_points[0] * curve[0] + control_points[1] * curve[1] +
+		control_points[2] * curve[2] + control_points[3] * curve[3]);
 }
