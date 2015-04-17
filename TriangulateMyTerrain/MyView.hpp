@@ -52,10 +52,13 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
-		int levelOfDetail = 2;
+		int levelOfDetail = 1;
 
 		int zIndices = 0;
 		int xIndices = 0;
+
+		bool frustrumEnabled = false;
+		float screenDepth_ = 500;
 
 		void applyHeightMap(float sizeY, std::vector<glm::vec3> &positions);
 		void applyBezier(std::vector<glm::vec3> &positions); 

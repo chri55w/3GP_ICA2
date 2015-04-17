@@ -2,6 +2,8 @@
 
 
 glm::vec3 MyUtilities::cross(glm::vec3 V1, glm::vec3 V2) {
+
+	//identifies the cross product
 	glm::vec3 normal;
 
 	double vx = (V1.y * V2.z) - (V1.z * V2.y);
@@ -17,6 +19,7 @@ glm::vec3 MyUtilities::cross(glm::vec3 V1, glm::vec3 V2) {
 //Developed this then found out openGL has its own normalize funtion.
 //		Left this function in use to demonstrate my own function that does the exact same thing. ENJOY! 
 glm::vec3 MyUtilities::normalize(glm::vec3 vec) {
+	//calculations to normalise a vector.
 	glm::vec3 normalizedVec;
 
 	double length = sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
@@ -59,16 +62,14 @@ std::vector<glm::vec3> MyUtilities::calculateNormals(std::vector<GLuint> element
 //Brownian Motion with Reference to the following:
 //			https://code.google.com/p/fractalterraingeneration/wiki/Fractional_Brownian_Motion
 
-void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const std::vector<glm::vec3> *normals, int octaves, float frequency, float lacunarity, float gain, float scale) {
+void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const std::vector<glm::vec3> *normals, int octaves, float frequency, float lacunarity, float gain) {
 
 	unsigned int seed = 237;
 	PerlinNoise pn(seed);
 
 	for (int i = 0; i < positions.size(); i++) {
 		double noise = brownian(positions[i], octaves, frequency, lacunarity, gain, pn);
-
-		noise *= scale;
-
+		
 		glm::vec3 noiseVec = glm::vec3(normals->at(i).x * noise, normals->at(i).y * noise, normals->at(i).z * noise);
 
 		positions[i] += noiseVec;
@@ -78,7 +79,7 @@ void MyUtilities::applyNoiseToTerrain(std::vector<glm::vec3> &positions, const s
 double MyUtilities::brownian(glm::vec3 position, int octaves, float frequency, float lacunarity, float gain, PerlinNoise &perNoise) {
 
 	double total = 0.0;
-	float amplitude = gain;
+	float amplitude = 15;
 
 
 	for (int i = 0; i < octaves; i++) {

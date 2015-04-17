@@ -1,10 +1,28 @@
-﻿Build started 17/04/2015 15:03:52.
+﻿Build started 17/04/2015 20:43:40.
      1>Project "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\TriangulateMyTerrain.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I../external/include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MyView.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I../external/include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\external\src\SceneModel\Camera.cpp ..\external\src\SceneModel\Context.cpp ..\external\src\tygra\FileHelper.cpp ..\external\src\tygra\Window.cpp main.cpp MyController.cpp MyFrustum.cpp MyHeightData.cpp MyPlanes.cpp MyView.cpp PerlinNoise.cpp MyUtilities.cpp
+         MyUtilities.cpp
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myutilities.cpp(43): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myutilities.cpp(55): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myutilities.cpp(70): warning C4018: '<' : signed/unsigned mismatch
+         PerlinNoise.cpp
          MyView.cpp
-     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(347): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(348): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(219): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(358): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\n3035136\desktop\3gp_ica2\triangulatemyterrain\myview.cpp(359): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+         MyPlanes.cpp
+         MyHeightData.cpp
+         MyFrustum.cpp
+         MyController.cpp
+         main.cpp
+         Window.cpp
+         FileHelper.cpp
+         Context.cpp
+         Camera.cpp
+         Generating Code...
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I../external/include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TC /analyze- /errorReport:prompt ..\external\src\tgl\tgl.c
+         tgl.c
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Debug\TriangulateMyTerrain.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\external\lib\Win32\v120\Debug opengl32.lib glfw.lib libpng.lib zlib.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"Debug\TriangulateMyTerrain.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"Debug\TriangulateMyTerrain.lib" /MACHINE:X86 /PROFILE Debug\Camera.obj
          Debug\Context.obj
@@ -26,9 +44,13 @@
          copy "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\Debug\TriangulateMyTerrain.exe" "C:\Users\n3035136\Desktop\3GP_ICA2\demo\TriangulateMyTerrain.exe"
          
          :VCEnd
-                 1 file(s) copied.
-     1>Done Building Project "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\TriangulateMyTerrain.vcxproj" (Build target(s)).
+         The system cannot find the path specified.
+                 0 file(s) copied.
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppCommon.targets(132,5): error MSB3073: The command "copy "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\Debug\TriangulateMyTerrain.exe" "C:\Users\n3035136\Desktop\3GP_ICA2\demo\TriangulateMyTerrain.exe"
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppCommon.targets(132,5): error MSB3073: 
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppCommon.targets(132,5): error MSB3073: :VCEnd" exited with code 1.
+     1>Done Building Project "C:\Users\n3035136\Desktop\3GP_ICA2\TriangulateMyTerrain\TriangulateMyTerrain.vcxproj" (Build target(s)) -- FAILED.
 
-Build succeeded.
+Build FAILED.
 
-Time Elapsed 00:00:01.56
+Time Elapsed 00:00:05.15

@@ -163,18 +163,18 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 	const float spacingZ = sizeZ / subDivisionsZ;
 	const float spacingX = sizeX / subDivisionsX;
-
+	//Generate spaced positions
 	for (int z = 0; z < zIndices; z++) {
 
 		for (int x = 0; x < xIndices; x++) { 
 			
-//			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
-			glm::vec3 new_pos = glm::vec3(x, 0, -z);
+			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
 
 
 			positions.push_back(new_pos);
 		}
 	}
+	//Generate triangle elements
 	int quadOrigin = 0;
 	for (int z = 0; z < subDivisionsZ; z++) {
 
@@ -206,13 +206,17 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
-	//applyHeightMap(sizeY, positions);
+	applyHeightMap(sizeY, positions);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 	
-	applyBezier(positions);
+	//Bezier is broken but included to demonstrate position reached
+	//applyBezier(positions);
 
-	//MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / (zIndices / 2.0f), 2.0, 0.5, 100 / levelOfDetail);
+	//frustrum culling is not working correctly, frustrum may be being constructed wrong.
+	//frustrumEnabled = true;
+
+	MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 8, 1.f / (zIndices / 1.5), 2.0, 0.5);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 
@@ -287,7 +291,8 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 
 	/* TODO: you are free to modify any of the drawing code below */
 
-	MyFrustum::generateFrustum(12, projection_xform, view_xform);
+	//generate the frustrum for this renderloop.
+	MyFrustum::generateFrustum(screenDepth_, projection_xform, view_xform);
 
 
 	glClearColor(0.f, 0.f, 0.25f, 0.f);
@@ -326,16 +331,22 @@ void MyView::windowViewRender(std::shared_ptr<tygra::Window> window) {
 	glUniformMatrix4fv(projection_xform_id, 1, GL_FALSE, glm::value_ptr(projection_xform));
 
 	glBindVertexArray(cube_vao_);
-
+	int cubesRendered = 0;
 	for (const auto& pos : scene_->getAllShapePositions()) {
-		world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
-		view_world_xform = view_xform * world_xform;
+		//If frustrum culling is enabled check if cube position is within frustrum before drawing, otherwise just draw.
+		if (MyFrustum::checkCube(pos.x, 64.f, -pos.y, 1) || !frustrumEnabled) {
+			world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
+			view_world_xform = view_xform * world_xform;
 
-		view_world_xform_id = glGetUniformLocation(shapes_sp_, "view_world_xform");
-		glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE, glm::value_ptr(view_world_xform));
+			view_world_xform_id = glGetUniformLocation(shapes_sp_, "view_world_xform");
+			glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE, glm::value_ptr(view_world_xform));
 
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			cubesRendered++;
+		}
 	}
+
+	std::cout << "Cubes rendered this draw call: " + std::to_string(cubesRendered) << std::endl;
 }
 void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 	float sizeModificationHeight = MyHeightData::getDataHeight() / (float)zIndices;
@@ -343,12 +354,11 @@ void MyView::applyHeightMap(float sizeY, std::vector<glm::vec3> &positions) {
 	
 	for (int z = 0; z < zIndices; z++) {
 		for (int x = 0; x < xIndices; x++) {
-			
+			//calculate the modified x and z values to take into consideration the size of the map in positions compared to the height map data.
 			int modifiedX = sizeModificationWidth * x;
 			int modifiedZ = sizeModificationWidth * z;
-
+			//fetch the height map data then apply it to the map.
 			float heightMapY = MyHeightData::getHeightValue(modifiedX, modifiedZ) * sizeY;
-
 
 			positions[x + z * xIndices].y = heightMapY;
 		}
@@ -359,16 +369,18 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 	int heightImageDataWidth = MyHeightData::getDataWidth();
 	int heightImageDataHeight = MyHeightData::getDataHeight();
 
+	//calculate the number of positions in each axis per patch (per 16 control points
 	int PUVCoordsCount = 4 * levelOfDetail;
 
 	std::vector<glm::vec2> UVs;
-
+	//calculate enough UVs for an entire patch worth of positions.
 	for (int v = 0; v < PUVCoordsCount; v++) {
 		for (int u = 0; u < PUVCoordsCount; u++) {
 			glm::vec2 UVCoord = glm::vec2((float)u / PUVCoordsCount, (float)v / PUVCoordsCount);
 			UVs.push_back(UVCoord);
 		}
 	}
+	//process patches from the positions data using the level of detail to increase the resolution of the map.
 	int patchesX = 0;
 	int patchesZ = 0;
 	std::vector<std::vector<std::vector<glm::vec3>>> patches;
@@ -397,8 +409,8 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 		}
 		patchesZ++;
 	}
+	//Used Whilst debugging, force data into the first patch to check the bezier effect on that patch.
 	/*
-	
 	std::vector<std::vector<glm::vec3>> controlPoints;
 
 	std::vector<glm::vec3> line;
@@ -436,6 +448,7 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 	patchesX++;
 	patchesZ++;
 	*/
+	//Increment through all patches, using offsets to calculate the new position of each position inside the patch using the pre-calculated UV's
 	std::vector<glm::vec3> tmp;
 	
 	for (int pZ = 0; pZ < patchesZ; pZ++) {
@@ -455,9 +468,7 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 			}
 		}
 	}
-
-	
-	int i = 0;
+	//Alternate way to increment through all patches calculating the new position inside the patch with the pre-calculated UV's
 	/*
 	int patchesX = heightImageDataWidth / 3;
 	int patchesZ = heightImageDataHeight / 3;
@@ -482,8 +493,8 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 	}*/
 }
 
-glm::vec3 MyView::BezierSurface(const std::vector<std::vector<glm::vec3>>& control_points, float u, float v)
-{
+glm::vec3 MyView::BezierSurface(const std::vector<std::vector<glm::vec3>>& control_points, float u, float v) {
+	//bezier function for each patch, this calculates the bezier accross the x axis for each z (four by four points) then bezier's the result.
 	std::vector<glm::vec3> curve{ control_points.size() };
 	for (unsigned int j = 0; j < control_points.size(); j++)
 	{
@@ -492,17 +503,13 @@ glm::vec3 MyView::BezierSurface(const std::vector<std::vector<glm::vec3>>& contr
 	return bezierCurve(curve, v);
 }
 
-glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& control_points, float step)
-{
-	float curve[4];
+glm::vec3 MyView::bezierCurve(const std::vector<glm::vec3>& control_points, float step) {
+	//standard bezier curve calculations
+	float curve1 = (1 - step) * (1 - step) * (1 - step);
+	float curve2 = 3 * step * (1 - step) * (1 - step);
+	float curve3 = 3 * step * step * (1 - step);
+	float curve4 = step * step * step;
 
-	/*I do not use pow() here because pow has a large over head which will
-	slow down the load especially with the number of times this function is called*/
-	curve[0] = (1 - step) * (1 - step) * (1 - step);
-	curve[1] = 3 * step * (1 - step) * (1 - step);
-	curve[2] = 3 * step * step * (1 - step);
-	curve[3] = step * step * step;
-
-	return (control_points[0] * curve[0] + control_points[1] * curve[1] +
-		control_points[2] * curve[2] + control_points[3] * curve[3]);
+	return (control_points[0] * curve1 + control_points[1] * curve2 +
+		control_points[2] * curve3 + control_points[3] * curve4);
 }

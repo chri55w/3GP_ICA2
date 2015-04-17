@@ -16,6 +16,7 @@ void MyHeightData::loadHeightMap(std::shared_ptr<const SceneModel::Context> scen
 }
 
 float MyHeightData::getHeightValue(int xPos, int yPos) {
+	//fetch height info from height image and scale it to a 0-1 value.
 	float height = ((*(uint8_t*)heightImage_(xPos, yPos)) / 256.f);
 
 	return height;
