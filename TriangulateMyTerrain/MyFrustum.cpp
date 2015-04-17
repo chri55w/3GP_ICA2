@@ -66,7 +66,7 @@ bool MyFrustum::CheckPoint(float x, float y, float z) {
 	// Check if the point is inside all six planes of the view frustum.
 	for (int i = 0; i<6; i++)
 	{
-		if ()
+		//if ()
 
 		/*
 		if (D3DXPlaneDotCoord(&m_planes[i], &D3DXVECTOR3(x, y, z)) < 0.0f)

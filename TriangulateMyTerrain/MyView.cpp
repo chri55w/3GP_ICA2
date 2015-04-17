@@ -168,8 +168,8 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 
 		for (int x = 0; x < xIndices; x++) { 
 			
-			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
-			//glm::vec3 new_pos = glm::vec3(x, 0, -z);
+//			glm::vec3 new_pos = glm::vec3(spacingX * x, 0, -spacingZ * z);
+			glm::vec3 new_pos = glm::vec3(x, 0, -z);
 
 
 			positions.push_back(new_pos);
@@ -206,11 +206,11 @@ void MyView::windowViewWillStart(std::shared_ptr<tygra::Window> window) {
 		quadOrigin++;
 	}
 
-	applyHeightMap(sizeY, positions);
+	//applyHeightMap(sizeY, positions);
 
 	terrainNormals = MyUtilities::calculateNormals(elements, positions);
 	
-	//applyBezier(positions);
+	applyBezier(positions);
 
 	//MyUtilities::applyNoiseToTerrain(positions, &terrainNormals, 4, 1.f / (zIndices / 2.0f), 2.0, 0.5, 100 / levelOfDetail);
 
@@ -397,37 +397,37 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 		}
 		patchesZ++;
 	}
-	
 	/*
+	
 	std::vector<std::vector<glm::vec3>> controlPoints;
 
 	std::vector<glm::vec3> line;
 
-	line.push_back(glm::vec3(0, 18 / 10.0f, 0));
-	line.push_back(glm::vec3(1, 9 / 10.0f, 0));
-	line.push_back(glm::vec3(2, 13 / 10.0f, 0));
-	line.push_back(glm::vec3(3, 6 / 10.0f, 0));
+	line.push_back(glm::vec3(0, 0, 0)*(float)levelOfDetail);
+	line.push_back(glm::vec3(1, 0, 0)*(float)levelOfDetail);
+	line.push_back(glm::vec3(2, 0, 0)*(float)levelOfDetail);
+	line.push_back(glm::vec3(3, 0, 0)*(float)levelOfDetail);
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 2 / 10.0f, -1);
-	line[1] = glm::vec3(1, 17 / 10.0f, -1);
-	line[2] = glm::vec3(2, 11 / 10.0f, -1);
-	line[3] = glm::vec3(3, 7 / 10.0f, -1);
+	line[0] = glm::vec3(0, 0, -1)*(float)levelOfDetail;
+	line[1] = glm::vec3(1, 5, -1)*(float)levelOfDetail;
+	line[2] = glm::vec3(2, 5, -1)*(float)levelOfDetail;
+	line[3] = glm::vec3(3, 0, -1)*(float)levelOfDetail;
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 20/10.0f, -2);
-	line[1] = glm::vec3(1, 4 / 10.0f, -2);
-	line[2] = glm::vec3(2, 1 / 10.0f, -2);
-	line[3] = glm::vec3(3, 15 / 10.0f, -2);
+	line[0] = glm::vec3(0, 0, -2)*(float)levelOfDetail;
+	line[1] = glm::vec3(1, 5, -2)*(float)levelOfDetail;
+	line[2] = glm::vec3(2, 5, -2)*(float)levelOfDetail;
+	line[3] = glm::vec3(3, 0, -2)*(float)levelOfDetail;
 
 	controlPoints.push_back(line);
 
-	line[0] = glm::vec3(0, 19 / 10.0f, -3);
-	line[1] = glm::vec3(1, 10 / 10.0f, -3);
-	line[2] = glm::vec3(2, 12 / 10.0f, -3);
-	line[3] = glm::vec3(3, 16 / 10.0f, -3);
+	line[0] = glm::vec3(0, 0, -3)*(float)levelOfDetail;
+	line[1] = glm::vec3(1, 0, -3)*(float)levelOfDetail;
+	line[2] = glm::vec3(2, 0, -3)*(float)levelOfDetail;
+	line[3] = glm::vec3(3, 0, -3)*(float)levelOfDetail;
 
 	controlPoints.push_back(line);
 
@@ -436,6 +436,7 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 	patchesX++;
 	patchesZ++;
 	*/
+	std::vector<glm::vec3> tmp;
 	
 	for (int pZ = 0; pZ < patchesZ; pZ++) {
 
@@ -448,8 +449,8 @@ void MyView::applyBezier(std::vector<glm::vec3> &positions) {
 				for (int u = 0; u < PUVCoordsCount; u++) {
 					int posOffset = thisPatchStartingPositionOffset + (u + (v*xIndices));
 
-					positions[posOffset] = BezierSurface(patches[thisPatchOffset], UVs[u + (v * (levelOfDetail * 4))].x, UVs[u + (v * levelOfDetail * 4)].y);
-
+					positions[posOffset] = BezierSurface(patches[thisPatchOffset], UVs[u + (v * PUVCoordsCount)].x, UVs[u + (v * PUVCoordsCount)].y);
+					tmp.push_back(positions[posOffset]);
 				}
 			}
 		}
