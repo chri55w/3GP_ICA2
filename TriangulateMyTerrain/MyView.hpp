@@ -52,7 +52,7 @@ class MyView : public tygra::WindowViewDelegate {
 		GLuint cube_vao_{ 0 };
 		GLuint cube_vbo_{ 0 };
 
-		int levelOfDetail = 3;
+		int levelOfDetail = 1;
 
 		int zIndices = 0;
 		int xIndices = 0;

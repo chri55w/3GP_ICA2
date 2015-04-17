@@ -1,8 +1,10 @@
 #include "MyFrustum.h"
 #include <math.h>
 
+std::vector<MyPlanes> MyFrustum::m_planes{};
+
 void MyFrustum::generateFrustum(float screenDepth, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-	float zMinimum, r;
+	/*float zMinimum, r;
 	glm::mat4 frustumMatrix;
 
 
